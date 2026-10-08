@@ -16,6 +16,12 @@ function setupSQLEditors(){document.querySelectorAll('textarea.sql').forEach((te
 setupSQLEditors();
 const missionGroups=[['q11','q12','q13'],['q21','q22','q23'],['q31','q32','q33','modelo','q35','q36'],['ticket-001','ticket-002','ticket-003','ticket-004','ticket-005']];
 function updateMissionNavigation(){missionGroups.forEach((group,i)=>{const done=group.filter(id=>{if(id==='modelo')return Boolean(imageData||validURL($('modelo-link').value.trim()));if(['q11','q21','q23'].includes(id))return Boolean(document.querySelector('input[name="'+id+'"]:checked'));return Boolean($(id)?.value?.trim());}).length;const el=$('nav-progress-'+(i+1));if(el)el.textContent=done+'/'+group.length;});}
+const missionToggle=$('mission-nav-toggle'),missionLinks=$('mission-nav-links');
+function setMissionNavCollapsed(collapsed){missionLinks.hidden=collapsed;missionToggle.setAttribute('aria-expanded',String(!collapsed));missionToggle.textContent=collapsed?'▾ Mostrar navegação':'▴ Ocultar navegação';}
+try{setMissionNavCollapsed(localStorage.getItem('uc6_mission_nav_collapsed')==='1');}catch(e){setMissionNavCollapsed(false);}
+missionToggle.addEventListener('click',()=>{const collapsed=!missionLinks.hidden;setMissionNavCollapsed(collapsed);try{localStorage.setItem('uc6_mission_nav_collapsed',collapsed?'1':'0');}catch(e){}});
+$('backup-bottom').addEventListener('click',()=>{save();$('json-btn').click();showSaveStatus('Download do backup JSON iniciado','saved');});
+$('clear-bottom').addEventListener('click',()=>$('clear-btn').click());
 const savedFields=()=>Array.from(document.querySelectorAll('[data-save]'));
 function values(){let data={};savedFields().forEach(e=>{if(e.type==='radio'){if(e.checked)data[e.name]=e.value;}else if(e.type==='checkbox')data[e.id]=e.checked;else data[e.id]=e.value;});return data;}
 function restore(data){if(!data||typeof data!=='object')return;savedFields().forEach(e=>{if(e.type==='radio')e.checked=data[e.name]===e.value;else if(e.type==='checkbox')e.checked=!!data[e.id];else if(typeof data[e.id]==='string')e.value=data[e.id];if(e.matches('textarea.sql'))e.dispatchEvent(new Event('input'));});if($('modelo-link').value.trim()&&!imageData)setModelMethod('link');syncModelControls();updateProgress();}
