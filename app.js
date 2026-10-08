@@ -96,9 +96,9 @@ if(missing.length||linkWarning){
  (linkWarning?'O link do modelo lógico pode estar inválido.\n':'')+
  'O PDF será gerado mesmo incompleto. Questões sem resposta serão identificadas no relatório.');
 }
-// Reserva uma janela durante o clique, antes de qualquer await, para evitar bloqueio de pop-ups.
-if(!window.jspdf?.jsPDF){fallbackWindow=window.open('','_blank');if(fallbackWindow)fallbackWindow.document.write('<title>Preparando relatório</title><p>Preparando relatório...</p>');}
-if(!(await ensurePDFLibrary())){status.textContent='Biblioteca PDF indisponível. Abrindo versão para imprimir e salvar como PDF...';printReportFallback(fallbackWindow);generating=false;btn.disabled=false;$('pdf-bottom').disabled=false;return;}if(fallbackWindow){fallbackWindow.close();fallbackWindow=null;}status.textContent='Preparando relatório completo...';try{
+// Reserva uma janela durante o clique, antes de qualquer await, inclusive se o jsPDF falhar após carregar.
+fallbackWindow=window.open('','_blank');if(fallbackWindow)fallbackWindow.document.write('<title>Preparando relatório</title><p>Preparando relatório...</p>');
+if(!(await ensurePDFLibrary())){status.textContent='Biblioteca PDF indisponível. Abrindo versão para imprimir e salvar como PDF...';printReportFallback(fallbackWindow);generating=false;btn.disabled=false;$('pdf-bottom').disabled=false;return;}status.textContent='Preparando relatório completo...';try{
 const {jsPDF}=window.jspdf;const pdf=new jsPDF({orientation:'portrait',unit:'mm',format:'a4',compress:true});const W=210,H=297,M=17,CW=W-2*M;let y=18,page=1;const setColor=(c)=>pdf.setTextColor(...c);const fill=(c)=>pdf.setFillColor(...c);const stroke=(c)=>pdf.setDrawColor(...c);
 function base(){fill(C.bg);pdf.rect(0,0,W,H,'F');fill(C.panel);pdf.roundedRect(11,9,W-22,H-18,3,3,'F');stroke(C.line);pdf.setLineWidth(.2);pdf.line(M,H-19,W-M,H-19);pdf.setFont('helvetica','normal');pdf.setFontSize(8);setColor(C.muted);pdf.text('AVALIAÇÃO FINAL · UC6 · SABOR DA PRAÇA',M,H-13);pdf.text(`Página ${page}`,W-M,H-13,{align:'right'});}
 function newPage(){pdf.addPage();page++;y=18;base();}
@@ -141,7 +141,7 @@ newPage();title('MISSÃO 4 — Manutenção do banco · I4');for(const t of tick
 title('Conferência do estudante');checks.forEach((c,i)=>line(($('check-'+i).checked?'[X] ':'[ ] ')+c,9.3));
 title('Avaliação do instrutor');line('I1 — Tipo de banco:     [ ] A     [ ] PA     [ ] NA',10);line('I2 — Escolha do SGBD:     [ ] A     [ ] PA     [ ] NA',10);line('I3 — Modelagem e implementação:     [ ] A     [ ] PA     [ ] NA',10);line('I4 — Manutenção do banco:     [ ] A     [ ] PA     [ ] NA',10);heading('Observações e feedback do instrutor');for(let i=0;i<5;i++){room(9);stroke(C.line);pdf.line(M,y+3,W-M,y+3);y+=10;}
 line('Este relatório reproduz as respostas do estudante. Não comprova por si só a execução dos scripts no MySQL Workbench.',8,C.muted);
-const filename=`Avaliacao_Final_UC6_${slug($('nome').value||'aluno')}_${slug($('matricula').value||'sem_matricula')}.pdf`;pdf.save(filename);status.textContent='Relatório PDF gerado. Abra o arquivo e confira todas as páginas antes de entregar.';
+const filename=`Avaliacao_Final_UC6_${slug($('nome').value||'aluno')}_${slug($('matricula').value||'sem_matricula')}.pdf`;pdf.save(filename);if(fallbackWindow){fallbackWindow.close();fallbackWindow=null;}status.textContent='Relatório PDF gerado. Abra o arquivo e confira todas as páginas antes de entregar.';
 }catch(e){console.error('Erro detalhado do PDF:',e);status.textContent='Erro na geração automática: '+e.message+'. Abrindo alternativa para salvar como PDF...';printReportFallback(fallbackWindow);}finally{generating=false;btn.disabled=false;$('pdf-bottom').disabled=false;}}
 $('pdf-btn').addEventListener('click',generatePDF);$('pdf-bottom').addEventListener('click',()=>{$('pdf-btn').scrollIntoView({behavior:'smooth',block:'center'});generatePDF();});
 })();
